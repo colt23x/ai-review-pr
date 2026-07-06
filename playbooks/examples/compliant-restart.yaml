@@ -1,0 +1,16 @@
+# Synthetic example - passes every playbook-safety check.
+version: 1
+name: restart-web-service
+
+actions:
+  - name: restart-web-service
+    risk_level: high
+    blast_radius: "us-east-1/web-fleet/canary"
+    rollback:
+      action: restart-web-service-rollback
+      description: "Re-enable the previous deployment and page on-call if health checks stay red for 5m"
+    idempotent: true
+    requires_approval: true
+    permissions:
+      - service:restart
+      - service:read

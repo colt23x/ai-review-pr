@@ -47,10 +47,10 @@ Full documentation: <https://kunchenguid.github.io/no-mistakes/>
         your branch
             │  git push no-mistakes
             ▼
-   ┌──────────────────────────────────────────────┐
-   │  disposable worktree — your work stays put     │
-   │  review → test → docs → lint → push → PR → CI  │
-   └──────────────────────────────────────────────┘
+   ┌──────────────────────────────────────────────────────────────────┐
+   │  disposable worktree — your work stays put                       │
+   │  review → test → docs → lint → playbook safety → push → PR → CI  │
+   └──────────────────────────────────────────────────────────────────┘
             │  every check green
             ▼
         clean PR, opened for you
@@ -96,6 +96,10 @@ $ no-mistakes
 ```
 
 For GitHub fork contributions, keep `origin` pointed at the parent repository and initialize with `no-mistakes init --fork-url <your-fork-url>`.
+
+## About this fork
+
+This fork ([colt23x/ai-review-pr](https://github.com/colt23x/ai-review-pr)) adds one pipeline stage on top of upstream `no-mistakes`: **[Playbook Safety](docs/src/content/docs/guides/playbook-safety.md)**, a structural safety check for autonomous remediation playbooks (rollback presence, blast-radius scoping, approval-gating on high-risk actions, idempotency, permission-scope creep) - the kind of gate an AIOps platform needs before an agent is trusted to restart services, reroute traffic, or scale resources unattended. It's built as a native pipeline step reusing `no-mistakes`'s existing finding model, deliberately extending a framework that already solved the hard infrastructure problem rather than rebuilding a gate pipeline from scratch. See [`playbooks/examples/`](playbooks/examples/) for synthetic playbooks that exercise each check.
 
 From the TUI you act on each **finding**: **auto-fix** ones are applied for you (or approve to let them), **ask-user** ones are a judgement call you approve, fix, or skip.
 Once every check is green, the gate forwards your branch to the configured push target and opens the PR for you, so there is no manual `git push origin` and no hand-written PR body.

@@ -77,10 +77,11 @@ type RepoConfig struct {
 	// ONLY from the trusted default-branch copy of .no-mistakes.yaml (never
 	// the pushed SHA), so a contributor cannot self-enable. Default false:
 	// the pushed branch controls nothing that executes.
-	AllowRepoCommands bool       `yaml:"allow_repo_commands"`
-	AutoFix           AutoFixRaw `yaml:"auto_fix"`
-	Intent            IntentRaw  `yaml:"intent"`
-	Test              TestRaw    `yaml:"test"`
+	AllowRepoCommands bool              `yaml:"allow_repo_commands"`
+	AutoFix           AutoFixRaw        `yaml:"auto_fix"`
+	Intent            IntentRaw         `yaml:"intent"`
+	Test              TestRaw           `yaml:"test"`
+	PlaybookSafety    PlaybookSafetyRaw `yaml:"playbook_safety"`
 }
 
 // Commands holds optional per-repo command overrides.
@@ -127,6 +128,7 @@ type Config struct {
 	AutoFix              AutoFix
 	Intent               Intent
 	Test                 Test
+	PlaybookSafety       PlaybookSafety
 }
 
 // TestRaw is the YAML representation of test-step settings.
@@ -153,6 +155,23 @@ type Test struct {
 type Evidence struct {
 	StoreInRepo bool
 	Dir         string
+}
+
+// PlaybookSafetyRaw is the YAML representation of playbook-safety-step
+// settings. Pointer fields distinguish "not set" (nil) from explicit
+// false/empty values.
+type PlaybookSafetyRaw struct {
+	Enabled  *bool    `yaml:"enabled"`
+	Patterns []string `yaml:"patterns"`
+}
+
+// PlaybookSafety is the resolved playbook-safety-step config. The step only
+// activates on a run whose diff touches a file matching one of Patterns
+// (matchIgnorePattern semantics, the same as ignore_patterns), so it is a
+// no-op for repos with no autonomous-remediation playbooks.
+type PlaybookSafety struct {
+	Enabled  bool
+	Patterns []string
 }
 
 // IntentRaw is the YAML representation of user-intent extraction settings.
@@ -241,6 +260,15 @@ intent:
 #   evidence:
 #     store_in_repo: true
 #     dir: .no-mistakes/evidence
+
+# Playbook safety gate. Runs after lint, and only when the diff touches a
+# file matching one of the patterns below, checking autonomous remediation
+# playbooks for rollback steps, blast-radius scoping, approval-gating on
+# high-risk actions, idempotency, and permission-scope creep.
+# playbook_safety:
+#   enabled: true
+#   patterns:
+#     - "playbooks/**"
 `
 
 // defaultBinary maps agent names to their default binary names.
@@ -692,6 +720,26 @@ func applyTestOverrides(dst *Test, src *TestRaw) {
 	}
 }
 
+// playbookSafetyDefaults returns the default playbook-safety-step settings.
+// Default-on with a "playbooks/**" activation pattern; the step is a no-op
+// on any diff that touches nothing under that pattern.
+func playbookSafetyDefaults() PlaybookSafety {
+	return PlaybookSafety{
+		Enabled:  true,
+		Patterns: []string{"playbooks/**"},
+	}
+}
+
+// applyPlaybookSafetyOverrides applies non-nil raw values onto resolved defaults.
+func applyPlaybookSafetyOverrides(dst *PlaybookSafety, src *PlaybookSafetyRaw) {
+	if src.Enabled != nil {
+		dst.Enabled = *src.Enabled
+	}
+	if len(src.Patterns) > 0 {
+		dst.Patterns = src.Patterns
+	}
+}
+
 // autoFixDefaults returns the default auto-fix configuration.
 func autoFixDefaults() AutoFix {
 	return AutoFix{
@@ -762,6 +810,9 @@ func Merge(global *GlobalConfig, repo *RepoConfig) *Config {
 	applyTestOverrides(&test, &global.Test)
 	applyTestOverrides(&test, &repo.Test)
 
+	playbookSafety := playbookSafetyDefaults()
+	applyPlaybookSafetyOverrides(&playbookSafety, &repo.PlaybookSafety)
+
 	cfg := &Config{
 		Agent:                global.Agent,
 		ACPXPath:             global.ACPXPath,
@@ -775,6 +826,7 @@ func Merge(global *GlobalConfig, repo *RepoConfig) *Config {
 		AutoFix:              af,
 		Intent:               intent,
 		Test:                 test,
+		PlaybookSafety:       playbookSafety,
 	}
 
 	if repo.Agent != "" {

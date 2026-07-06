@@ -42,6 +42,7 @@ export default defineConfig({
             { label: "Setup Wizard", slug: "guides/setup-wizard" },
             { label: "Using the TUI", slug: "guides/tui" },
             { label: "Troubleshooting", slug: "guides/troubleshooting" },
+            { label: "Playbook Safety Gate", slug: "guides/playbook-safety" },
           ],
         },
         {

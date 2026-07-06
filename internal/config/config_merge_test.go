@@ -75,6 +75,38 @@ func TestMerge_RepoDoesNotOverrideWhenEmpty(t *testing.T) {
 	}
 }
 
+func TestMerge_PlaybookSafetyDefaults(t *testing.T) {
+	global := &GlobalConfig{Agent: types.AgentClaude, CITimeout: 4 * time.Hour, LogLevel: "info"}
+	repo := &RepoConfig{}
+
+	cfg := Merge(global, repo)
+	if !cfg.PlaybookSafety.Enabled {
+		t.Error("expected playbook safety enabled by default")
+	}
+	if len(cfg.PlaybookSafety.Patterns) != 1 || cfg.PlaybookSafety.Patterns[0] != "playbooks/**" {
+		t.Errorf("patterns = %v, want [playbooks/**]", cfg.PlaybookSafety.Patterns)
+	}
+}
+
+func TestMerge_PlaybookSafetyRepoOverrides(t *testing.T) {
+	global := &GlobalConfig{Agent: types.AgentClaude, CITimeout: 4 * time.Hour, LogLevel: "info"}
+	disabled := false
+	repo := &RepoConfig{
+		PlaybookSafety: PlaybookSafetyRaw{
+			Enabled:  &disabled,
+			Patterns: []string{"runbooks/**"},
+		},
+	}
+
+	cfg := Merge(global, repo)
+	if cfg.PlaybookSafety.Enabled {
+		t.Error("expected repo override to disable playbook safety")
+	}
+	if len(cfg.PlaybookSafety.Patterns) != 1 || cfg.PlaybookSafety.Patterns[0] != "runbooks/**" {
+		t.Errorf("patterns = %v, want [runbooks/**]", cfg.PlaybookSafety.Patterns)
+	}
+}
+
 func TestMerge_AutoFixDefaults(t *testing.T) {
 	global := &GlobalConfig{Agent: types.AgentClaude, CITimeout: 4 * time.Hour, LogLevel: "info"}
 	repo := &RepoConfig{}
