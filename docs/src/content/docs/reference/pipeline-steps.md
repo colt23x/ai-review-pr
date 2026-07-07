@@ -6,7 +6,7 @@ description: Reference for each step in the validation pipeline.
 This is the per-step reference. For the overview and rationale, see [Pipeline](/no-mistakes/concepts/pipeline/). For the fix loop, see [Auto-Fix Loop](/no-mistakes/concepts/auto-fix/).
 
 ```
-intent → rebase → review → test → document → lint → push → pr → ci
+intent → rebase → review → test → document → lint → playbook-safety → push → pr → ci
 ```
 
 Each step can produce findings, request approval, trigger auto-fix, or apply safe fixes during its own pass. Steps that encounter fatal errors stop the pipeline. Steps can also be pre-skipped when starting a run, skipped by the user, or skipped automatically by the pipeline.
@@ -124,6 +124,23 @@ Fix commits use `no-mistakes(lint): <summary>`.
 When `commands.lint` is empty, unresolved findings pause for approval instead of starting another automatic lint/fix loop, because the agent already attempted a fix during the lint pass.
 
 **Default auto-fix limit:** `3`.
+
+## Playbook Safety
+
+Checks autonomous remediation playbooks (rollback runbooks, incident-response scripts, or any similar autonomous-action definition) against a fixed set of structural safety properties before they can merge. It is a distinct, domain-specific gate rather than a code-quality check: standard lint and test gates verify a playbook *works*, this verifies it is *safe to run unattended in production*.
+
+**Behavior:**
+- Skips entirely when no changed file matches `playbook_safety.patterns` (default `["playbooks/**"]`), so this step is a no-op for repos with no playbooks
+- Parses each matching changed file with a small, generic playbook schema (`version`, `name`, and a list of `actions`, each with `name`, `risk_level`, `blast_radius`, `rollback`, `idempotent`, `requires_approval`, and `permissions`)
+- Checks every action against a fixed, versioned rule set: rollback/reversal step present, blast-radius scope present and non-wildcard, high-risk actions (`risk_level: high` or `critical`) require `requires_approval: true`, idempotency declared, and permission scope not silently widened relative to the same file on the default branch
+- Unlike every other step, **never invokes an agent** - whether a playbook is safe to run unattended is a structural judgment call, not a code-quality issue an LLM should paper over, so evaluation is deterministic: the same playbook always produces the same findings, with no prompt-injection surface from playbook content
+- A playbook that fails to parse produces an `error`-severity, `ask-user` finding rather than blocking silently
+
+**Approval:** the missing-approval-flag finding is mechanically auto-fixed in place (adds `requires_approval: true`, never removes it) and committed without pausing. Every other finding - missing rollback, unscoped blast radius, undeclared idempotency, widened permission scope, or a parse error - is `ask-user`: these are deliberate safety judgment calls for a human, not something an agent should draft on your behalf.
+
+**Auto-fix:** the `requires_approval` fix happens inline during the same pass that detects it; there is no separate auto-fix loop or agent-driven fix path for this step.
+
+**Default auto-fix limit:** not applicable - the only fixable finding is applied deterministically without a retry loop.
 
 ## Push
 

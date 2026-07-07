@@ -88,6 +88,12 @@ func DemoSteps() []pipeline.Step {
 			},
 		},
 		&demoStep{
+			name:       types.StepPlaybookSafety,
+			delay:      1 * time.Second,
+			displayDur: 3 * time.Second,
+			log:        "No playbook files changed, skipping playbook safety checks.",
+		},
+		&demoStep{
 			name:       types.StepPush,
 			delay:      2 * time.Second,
 			displayDur: 5 * time.Second,

@@ -40,6 +40,7 @@ func TestDemoSteps(t *testing.T) {
 		types.StepTest,
 		types.StepDocument,
 		types.StepLint,
+		types.StepPlaybookSafety,
 		types.StepPush,
 		types.StepPR,
 		types.StepCI,

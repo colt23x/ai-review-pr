@@ -1243,6 +1243,8 @@ func stepDisplayName(name types.StepName) string {
 		return "Document"
 	case types.StepLint:
 		return "Lint"
+	case types.StepPlaybookSafety:
+		return "Playbook Safety"
 	case types.StepPush:
 		return "Push"
 	case types.StepPR:

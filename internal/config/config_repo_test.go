@@ -99,6 +99,30 @@ func TestLoadRepo_PartialCommands(t *testing.T) {
 	}
 }
 
+func TestLoadRepo_PlaybookSafetyFromFile(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, ".no-mistakes.yaml")
+	data := `playbook_safety:
+  enabled: false
+  patterns:
+    - "runbooks/**"
+`
+	if err := os.WriteFile(path, []byte(data), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := LoadRepo(dir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.PlaybookSafety.Enabled == nil || *cfg.PlaybookSafety.Enabled {
+		t.Errorf("enabled = %v, want false", cfg.PlaybookSafety.Enabled)
+	}
+	if len(cfg.PlaybookSafety.Patterns) != 1 || cfg.PlaybookSafety.Patterns[0] != "runbooks/**" {
+		t.Errorf("patterns = %v, want [runbooks/**]", cfg.PlaybookSafety.Patterns)
+	}
+}
+
 func TestLoadRepo_InvalidYAML(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, ".no-mistakes.yaml")

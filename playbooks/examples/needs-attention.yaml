@@ -1,0 +1,12 @@
+# Synthetic example - trips every playbook-safety check on purpose:
+#   - no rollback step
+#   - wildcard blast radius (defaults to "everywhere")
+#   - idempotency not declared
+#   - high-risk action missing requires_approval (auto-fixed by the gate)
+version: 1
+name: reroute-traffic
+
+actions:
+  - name: reroute-all-traffic
+    risk_level: critical
+    blast_radius: "*"

@@ -43,6 +43,11 @@ test:
   evidence:
     store_in_repo: true
     dir: .no-mistakes/evidence
+
+playbook_safety:
+  enabled: true
+  patterns:
+    - "playbooks/**"
 ```
 
 ## Fields
@@ -184,3 +189,14 @@ By default, test evidence stays in a temporary directory keyed by run ID and is 
 Set `store_in_repo: true` to write evidence under `<dir>/<branch-slug>` inside the worktree so push can commit and publish it with the branch.
 Branch slashes become nested directories, unsafe branch characters are replaced, and an empty branch slug falls back to the run ID.
 If `dir` is absolute, escapes the worktree, points into `.git`, crosses a symlink, or is ignored by Git, no-mistakes falls back to temporary evidence storage for that run.
+
+### playbook_safety
+
+Configure the [playbook safety step](/no-mistakes/reference/pipeline-steps/#playbook-safety), which checks autonomous remediation playbooks for rollback steps, blast-radius scoping, approval-gating on high-risk actions, idempotency, and permission-scope creep.
+
+| Field | Type | Default |
+|---|---|---|
+| `playbook_safety.enabled` | `bool` | `true` |
+| `playbook_safety.patterns` | `string[]` | `["playbooks/**"]` |
+
+`patterns` uses the same matching rules as [`ignore_patterns`](#ignore_patterns). The step is a no-op on any run whose diff touches nothing matching one of these patterns, so it costs nothing for repos with no playbooks. Set `enabled: false` to turn it off entirely.
