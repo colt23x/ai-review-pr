@@ -12,7 +12,7 @@ Full design rationale, goals, and phasing live in [SPEC.md](SPEC.md). This READM
 - **Correlation** (`src/intelligence/correlate.ts`) — links entities across tools via explicit references and shared identifiers (ticket keys, dependency links) into `Workstream` groupings with recorded evidence. Precision over recall; no LLM in the loop yet (that's Phase 2 residue-matching).
 - **Risk detection** (`src/intelligence/risk.ts`) — deterministic rules, never model guesses: **blocked**, **slipping** (with upstream propagation), **stale**, **owed** (spec §8.3).
 - **Attention ranking** (`src/intelligence/rank.ts`) — every item scored for how much it needs you *now*, with human-readable reasons and a suppression threshold. Most items should score low and stay out of the way.
-- **Views** (`src/views/`) — `today` ("what needs me?"), `prep` ("prep me for this meeting"), `risks` ("what's at risk?").
+- **Views** (`src/views/`) — `today` ("what needs me?"), `prep` ("prep me for this meeting"), `risks` ("what's at risk?"), plus an **HTML dashboard** (`html`/`serve`) that renders all of them on one page: stat tiles, the attention list with scores and reasons, the schedule with inline meeting prep, risk sections, and workstreams with linking evidence. Self-contained (no external assets), light/dark aware.
 
 Not yet implemented (later phases per spec §10): LLM-assisted correlation, Slack/GitHub adapters, status generation, and the confirmed write-back surface.
 
@@ -25,6 +25,10 @@ npm install
 npm run demo                                  # "what needs me today?"
 npx ts-node src/index.ts --demo risks         # blocked / slipping / stale / owed
 npx ts-node src/index.ts --demo prep "Payments sync"
+
+# HTML dashboard (all views on one page)
+npx ts-node src/index.ts --demo serve         # http://localhost:3141
+npx ts-node src/index.ts --demo html          # or write dashboard.html and open it
 ```
 
 ## Connecting real sources
@@ -46,6 +50,7 @@ npx ts-node src/index.ts --demo prep "Payments sync"
    npm run today
    npm run risks
    npx ts-node src/index.ts prep "<event title>"
+   npx ts-node src/index.ts serve   # browser dashboard; hit /sync to force a re-pull
    ```
 
 The local snapshot is a lens, not a system of record — delete `.tpmcc/` any time; everything re-fetches from the sources.

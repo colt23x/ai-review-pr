@@ -3,9 +3,13 @@ import "dotenv/config";
 import { loadConfig, Config } from "./config";
 import { sync, enrich } from "./sync";
 import { saveSnapshot, loadSnapshot, Snapshot } from "./store";
+import * as fs from "fs";
+import * as http from "http";
+import * as path from "path";
 import { renderToday } from "./views/today";
 import { renderPrep } from "./views/prep";
 import { renderRisks } from "./views/risks";
+import { renderHtml } from "./views/html";
 import { demoConfig, demoEntities } from "./demo";
 
 const USAGE = `TPM Command Center — a unified, MCP-connected work surface for TPMs
@@ -17,6 +21,8 @@ Commands:
   today           "What needs me today?" — attention-ranked view (syncs if no snapshot)
   prep <event>    "Prep me for this meeting." — context pack for a calendar event
   risks           "What's at risk?" — blocked / slipping / stale / owed items
+  html [file]     Render the full dashboard to a self-contained HTML file
+  serve [port]    Serve the dashboard over HTTP (re-renders on every refresh)
 
 Flags:
   --demo          Run against built-in sample data (no MCP servers needed)
@@ -77,6 +83,37 @@ async function main(): Promise<void> {
     case "risks": {
       const snapshot = await getSnapshot(config, demo, false);
       console.log(renderRisks(snapshot.entities));
+      break;
+    }
+    case "html": {
+      const snapshot = await getSnapshot(config, demo, false);
+      const out = positional[1] ?? path.join(process.cwd(), "dashboard.html");
+      fs.writeFileSync(out, renderHtml(snapshot, config));
+      console.log(`Dashboard written to ${out} — open it in a browser.`);
+      break;
+    }
+    case "serve": {
+      const port = Number(positional[1] ?? 3141);
+      const server = http.createServer(async (req, res) => {
+        try {
+          // Re-sync on every refresh in live mode so the view is never stale;
+          // demo mode just re-renders the sample data.
+          const snapshot = demo
+            ? await getSnapshot(config, true, false)
+            : req.url === "/sync"
+              ? await getSnapshot(config, false, true)
+              : await getSnapshot(config, false, false);
+          res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+          res.end(renderHtml(snapshot, config));
+        } catch (err) {
+          res.writeHead(500, { "Content-Type": "text/plain" });
+          res.end(err instanceof Error ? err.message : String(err));
+        }
+      });
+      server.listen(port, () => {
+        console.log(`TPM Command Center at http://localhost:${port}${demo ? " (demo data)" : ""}`);
+        console.log(`Visit /sync to force a re-pull from your MCP servers. Ctrl+C to stop.`);
+      });
       break;
     }
     default:
