@@ -8,6 +8,7 @@ Each tool lives in its own directory under `tools/`, with its own README, depend
 
 | Tool | What it does |
 |------|---------------|
+| [`tpm-command-center`](tools/tpm-command-center/README.md) | A unified, MCP-connected work surface for TPMs. Connects Jira, calendar, and other tools through MCP servers into a single attention-ranked view of what actually needs you today — with cross-tool workstream correlation, deterministic risk detection (blocked / slipping / stale / owed), and meeting-prep context packs. Not a merged feed; a synthesis layer. See the full [spec](tools/tpm-command-center/SPEC.md). |
 | [`sprint-report-agent`](tools/sprint-report-agent/README.md) | Generates sprint summary, stakeholder update, and weekly rollup reports from GitHub (and optionally Jira / Linear) issue/PR data. Can run on a schedule via GitHub Actions and post to Slack. |
 
 See each tool's README for setup, configuration, and usage details.
@@ -16,7 +17,13 @@ See each tool's README for setup, configuration, and usage details.
 
 ```
 tools/
-└── sprint-report-agent/   # Sprint report generator (see table above)
+├── tpm-command-center/     # MCP-connected TPM work surface (see table above)
+│   ├── README.md
+│   ├── SPEC.md             # Full design spec
+│   ├── package.json
+│   ├── src/
+│   └── servers.example.json
+└── sprint-report-agent/    # Sprint report generator (see table above)
     ├── README.md
     ├── package.json
     ├── src/

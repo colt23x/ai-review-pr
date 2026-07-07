@@ -1,0 +1,28 @@
+{
+  "name": "tpm-command-center",
+  "version": "0.1.0",
+  "description": "A unified, MCP-connected work surface for technical program managers",
+  "main": "dist/index.js",
+  "bin": {
+    "tpmcc": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "today": "ts-node src/index.ts today",
+    "prep": "ts-node src/index.ts prep",
+    "risks": "ts-node src/index.ts risks",
+    "sync": "ts-node src/index.ts sync",
+    "demo": "ts-node src/index.ts --demo today"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.0"
+  }
+}

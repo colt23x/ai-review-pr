@@ -1,0 +1,34 @@
+{
+  "me": {
+    "names": ["Colton Wirth"],
+    "emails": ["colt23x@gmail.com"]
+  },
+  "staleAfterDays": 5,
+  "servers": {
+    "jira": {
+      "adapter": "jira",
+      "command": "npx",
+      "args": ["-y", "mcp-atlassian"],
+      "env": {
+        "JIRA_URL": "https://your-org.atlassian.net",
+        "JIRA_USERNAME": "you@example.com",
+        "JIRA_API_TOKEN": "set-me"
+      },
+      "options": {
+        "jql": "resolution = Unresolved AND updated >= -30d ORDER BY updated DESC"
+      }
+    },
+    "calendar": {
+      "adapter": "calendar",
+      "command": "npx",
+      "args": ["-y", "@cocal/google-calendar-mcp"],
+      "env": {
+        "GOOGLE_OAUTH_CREDENTIALS": "/path/to/gcp-oauth.keys.json"
+      },
+      "options": {
+        "calendarId": "primary",
+        "horizonDays": "7"
+      }
+    }
+  }
+}
